@@ -117,6 +117,7 @@ const LogColor get_color(const eLogLevel level) {
 const std::string get_level_string(const eLogLevel level) {
 	std::vector<std::string> levelStrings = {
 	    {""},
+	    {""},
 	    {"AUTH"},
 	    {"INFO"},
 	    {"WARN"},
