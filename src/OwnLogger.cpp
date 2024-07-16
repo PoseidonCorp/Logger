@@ -14,12 +14,13 @@ OwnLogger::~OwnLogger() {
 	// g_logger = nullptr;
 }
 
-void OwnLogger::init(std::filesystem::path folderPath, bool showDate, bool showFile) {
+void OwnLogger::init(std::filesystem::path folderPath, int alpha, bool showDate, bool showFile) {
 	if (m_attach_console) {
 		if (m_did_console_exist = ::AttachConsole(GetCurrentProcessId()); !m_did_console_exist)
 			AllocConsole();
 
 		if (m_console_handle = GetStdHandle(STD_OUTPUT_HANDLE); m_console_handle != nullptr) {
+			SetLayeredWindowAttributes(GetConsoleWindow(), NULL, alpha, LWA_ALPHA);
 			SetConsoleTitleA(m_console_title.data());
 			SetConsoleOutputCP(CP_UTF8);
 

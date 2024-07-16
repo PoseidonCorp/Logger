@@ -38,7 +38,7 @@ public:
 	OwnLogger(std::string consoleName, bool wine, bool inConsole = true, bool inFile = true, bool createBackup = true, std::string logFileName = "Log.txt");
 	virtual ~OwnLogger();
 
-	void init(std::filesystem::path folderPath, bool showDate = true, bool showFile = true);
+	void init(std::filesystem::path folderPath, int alpha = 255, bool showDate = true, bool showFile = true);
 	void destroy();
 
 	void format_console_progress(std::string msg, int progress);
