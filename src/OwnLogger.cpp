@@ -118,7 +118,7 @@ const LogColor get_color(const eLogLevel level) {
 const std::string get_level_string(const eLogLevel level) {
 	std::vector<std::string> levelStrings = {
 	    {""},
-	    {""},
+	    {"LOADING"},
 	    {"AUTH"},
 	    {"INFO"},
 	    {"WARN"},
@@ -133,7 +133,7 @@ const std::string get_level_string(const eLogLevel level) {
 void OwnLogger::format_console(const LogMessagePtr msg, bool showDate, bool showFile) {
 	const auto color = get_color(msg->Level());
 
-	const auto timestamp = showDate ? std::format("{0:%H:%M:%S} ", msg->Timestamp()) : "";
+	const auto timestamp = showDate ? std::format("{0:%H:%M:%S} ", std::chrono::time_point_cast<std::chrono::seconds>(msg->Timestamp())) : "";
 	const auto& location = msg->Location();
 	const auto level     = msg->Level();
 
@@ -162,7 +162,7 @@ void OwnLogger::format_console(const LogMessagePtr msg, bool showDate, bool show
 void OwnLogger::format_console_simple(const LogMessagePtr msg, bool showDate, bool showFile) {
 	const auto color = get_color(msg->Level());
 
-	const auto timestamp = std::format("{0:%H:%M:%S}", msg->Timestamp());
+	const auto timestamp = showDate ? std::format("{0:%H:%M:%S} ", std::chrono::time_point_cast<std::chrono::seconds>(msg->Timestamp())) : "";
 	const auto& location = msg->Location();
 	const auto level     = msg->Level();
 
@@ -198,7 +198,7 @@ void OwnLogger::format_file(const LogMessagePtr msg, bool showDate, bool showFil
 	if (!m_file_out.is_open())
 		return;
 
-	const auto timestamp = std::format("{0:%H:%M:%S}", msg->Timestamp());
+	const auto timestamp = showDate ? std::format("{0:%H:%M:%S} ", std::chrono::time_point_cast<std::chrono::seconds>(msg->Timestamp())) : "";
 	const auto& location = msg->Location();
 	const auto level     = msg->Level();
 
