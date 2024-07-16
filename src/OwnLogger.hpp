@@ -41,6 +41,8 @@ public:
 	void init(std::filesystem::path folderPath, bool showDate = true, bool showFile = true);
 	void destroy();
 
+	void format_console_progress(std::string msg, int progress);
+
 private:
 	void create_backup(std::filesystem::path folderPath);
 
@@ -50,7 +52,6 @@ private:
 	void format_console(const LogMessagePtr msg, bool showDate = true, bool showFile = true);
 	void format_console_simple(const LogMessagePtr msg, bool showDate = true, bool showFile = true);
 	void format_file(const LogMessagePtr msg, bool showDate = true, bool showFile = true);
-	void format_console_progress(std::string msg, int progress);
 
 public:
 	bool m_attach_console;
