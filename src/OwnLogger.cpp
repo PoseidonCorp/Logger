@@ -104,12 +104,12 @@ void OwnLogger::close_outstreams() {
 
 const LogColor get_color(const eLogLevel level) {
 	switch (level) {
-	case PROGRESS: return LogColor::GREEN;
-	case AUTH: return LogColor::BLUE;
+	case PROGRESS: return LogColor::BRIGHT_GREEN;
+	case AUTH: return LogColor::BRIGHT_BLUE;
 	case INFO: return LogColor::CYAN;
-	case WARNING: return LogColor::YELLOW;
-	case FATAL: return LogColor::RED;
-	case DEBUG: return LogColor::MAGENTA;
+	case WARNING: return LogColor::BRIGHT_YELLOW;
+	case FATAL: return LogColor::BRIGHT_RED;
+	case DEBUG: return LogColor::BLUE;
 	case VERBOSE: return LogColor::YELLOW;
 	}
 	return LogColor::WHITE;
@@ -133,7 +133,7 @@ const std::string get_level_string(const eLogLevel level) {
 void OwnLogger::format_console(const LogMessagePtr msg, bool showDate, bool showFile) {
 	const auto color = get_color(msg->Level());
 
-	const auto timestamp = showDate ? std::format("{0:%H:%M:%S} ", std::chrono::time_point_cast<std::chrono::seconds>(msg->Timestamp())) : "";
+	const auto timestamp = showDate ? std::format("{0:%H:%M:%S}", std::chrono::time_point_cast<std::chrono::seconds>(msg->Timestamp())) : "";
 	const auto& location = msg->Location();
 	const auto level     = msg->Level();
 
@@ -164,7 +164,7 @@ void OwnLogger::format_console(const LogMessagePtr msg, bool showDate, bool show
 void OwnLogger::format_console_simple(const LogMessagePtr msg, bool showDate, bool showFile) {
 	const auto color = get_color(msg->Level());
 
-	const auto timestamp = showDate ? std::format("{0:%H:%M:%S} ", std::chrono::time_point_cast<std::chrono::seconds>(msg->Timestamp())) : "";
+	const auto timestamp = showDate ? std::format("{0:%H:%M:%S}", std::chrono::time_point_cast<std::chrono::seconds>(msg->Timestamp())) : "";
 	const auto& location = msg->Location();
 	const auto level     = msg->Level();
 
@@ -201,7 +201,7 @@ void OwnLogger::format_file(const LogMessagePtr msg, bool showDate, bool showFil
 	if (!m_file_out.is_open())
 		return;
 
-	const auto timestamp = showDate ? std::format("{0:%H:%M:%S} ", std::chrono::time_point_cast<std::chrono::seconds>(msg->Timestamp())) : "";
+	const auto timestamp = showDate ? std::format("{0:%H:%M:%S}", std::chrono::time_point_cast<std::chrono::seconds>(msg->Timestamp())) : "";
 	const auto& location = msg->Location();
 	const auto level     = msg->Level();
 

@@ -15,7 +15,7 @@ using namespace al;
 	"0x" << std::hex << std::uppercase << (DWORD64)value << std::dec << std::nouppercase
 
 template<typename TP>
-std::time_t to_time_t(TP tp) {
+inline std::time_t to_time_t(TP tp) {
 	using namespace std::chrono;
 	auto sctp = time_point_cast<system_clock::duration>(tp - TP::clock::now() + system_clock::now());
 	return system_clock::to_time_t(sctp);
@@ -23,14 +23,22 @@ std::time_t to_time_t(TP tp) {
 
 enum class LogColor {
 	RESET,
-	WHITE   = 97,
-	CYAN    = 36,
-	MAGENTA = 35,
-	BLUE    = 34,
-	GREEN   = 32,
-	YELLOW  = 33,
-	RED     = 31,
-	BLACK   = 30
+	BLACK          = 30,
+	RED            = 31,
+	GREEN          = 32,
+	YELLOW         = 33,
+	BLUE           = 34,
+	MAGENTA        = 35,
+	CYAN           = 36,
+	DARK_WHITE     = 37,
+	BRIGHT_BLACK   = 90,
+	BRIGHT_RED     = 91,
+	BRIGHT_GREEN   = 92,
+	BRIGHT_YELLOW  = 93,
+	BRIGHT_BLUE    = 94,
+	BRIGHT_MAGENTA = 95,
+	BRIGHT_CYAN    = 96,
+	WHITE          = 97,
 };
 
 class OwnLogger final {
