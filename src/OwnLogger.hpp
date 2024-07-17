@@ -49,7 +49,7 @@ public:
 	void init(std::filesystem::path folderPath, int alpha = 255, bool showDate = true, bool showFile = true);
 	void destroy();
 
-	void format_console_progress(std::string msg, int progress);
+	void format_console_progress(std::string filled, std::string unfilled, int progress);
 
 private:
 	void create_backup(std::filesystem::path folderPath);
