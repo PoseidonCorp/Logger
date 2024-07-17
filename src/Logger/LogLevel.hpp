@@ -9,6 +9,8 @@ namespace al {
 		WARNING,
 		FATAL,
 		DEBUG,
-		VERBOSE
+		VERBOSE,
+		INFO_DL,
+		WARNING_DL,
 	};
 }
