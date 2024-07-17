@@ -192,9 +192,10 @@ void OwnLogger::format_console_simple(const LogMessagePtr msg, bool showDate, bo
 
 void OwnLogger::format_console_progress(std::string msg, int progress) {
 	if (progress == 100)
-		m_console_out << "\033[K" << msg << std::endl << std::flush;
+		m_console_out << "\033[K" << ADD_COLOR_TO_STREAM(LogColor::GREEN) << msg << RESET_STREAM_COLOR << " " << progress << "%\r" << std::endl
+		              << std::flush;
 	else
-		m_console_out << "\033[K" << msg << std::flush;
+		m_console_out << "\033[K" << ADD_COLOR_TO_STREAM(LogColor::GREEN) << msg << RESET_STREAM_COLOR << " " << progress << "%\r" << std::flush;
 }
 
 void OwnLogger::format_file(const LogMessagePtr msg, bool showDate, bool showFile) {
