@@ -142,8 +142,9 @@ void OwnLogger::format_console(const LogMessagePtr msg, bool showDate, bool show
 	const auto& location = msg->Location();
 	const auto level     = msg->Level();
 
-	const auto file =
-	    showFile ? std::filesystem::path(location.file_name()).filename().string() : "";
+	const auto file = showFile || level == eLogLevel::FATAL || level == eLogLevel::WARNING || level == eLogLevel::VERBOSE ?
+	    std::filesystem::path(location.file_name()).filename().string() :
+	    "";
 
 	const auto timestamp_stream = (showDate ? timestamp : "");
 	const auto level_stream     = get_level_string(level);
@@ -175,8 +176,9 @@ void OwnLogger::format_console_simple(const LogMessagePtr msg, bool showDate, bo
 	const auto& location = msg->Location();
 	const auto level     = msg->Level();
 
-	const auto file =
-	    showFile ? std::filesystem::path(location.file_name()).filename().string() : "";
+	const auto file = showFile || level == eLogLevel::FATAL || level == eLogLevel::WARNING || level == eLogLevel::VERBOSE ?
+	    std::filesystem::path(location.file_name()).filename().string() :
+	    "";
 
 	const auto timestamp_stream = (showDate ? timestamp : "");
 	const auto level_stream     = get_level_string(level);
