@@ -59,8 +59,7 @@ void OwnLogger::init(std::filesystem::path folderPath, int alpha, bool showDate,
 	}
 	if (this->should_create_backup)
 		create_backup(folderPath);
-	if (this->write_in_file)
-		open_outstreams(folderPath);
+	open_outstreams(folderPath);
 
 	this->show_date = this->show_date;
 	this->show_file = showFile;
@@ -107,7 +106,8 @@ void OwnLogger::open_outstreams(std::filesystem::path folderPath) {
 	if (m_attach_console)
 		m_console_out.open("CONOUT$", std::ios_base::out | std::ios_base::app);
 
-	m_file_out.open(m_file_path.c_str(), std::ios_base::out | std::ios_base::trunc);
+	if (this->write_in_file)
+		m_file_out.open(m_file_path.c_str(), std::ios_base::out | std::ios_base::trunc);
 }
 
 void OwnLogger::close_outstreams() {
