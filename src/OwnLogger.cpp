@@ -1,15 +1,34 @@
 #include "OwnLogger.hpp"
 
-LogCapture LOG(const LogLevel level, std::source_location location) {
-	return LogCapture{level};
+OwnLogger& OwnLogger::Log(const LogLevel level, std::source_location location) {
+	std::lock_guard<std::mutex> lock(m_Mutex);
+	m_CurrentLogMessage = std::make_shared<LogMessage>(level, std::chrono::system_clock::now(), location);
+	m_Stream.str(""); // Réinitialise le flux pour un nouveau message
+	return *this;
+}
+
+// Fonction Flush pour envoyer le message de log au fichier/console
+void OwnLogger::Flush() {
+	std::lock_guard<std::mutex> lock(m_Mutex);
+	if (m_CurrentLogMessage) {
+		m_CurrentLogMessage->m_Message = m_Stream.str(); // Capture du message complet
+		// Formattage console ou fichier
+		if (!simple_logger) {
+			format_console(m_CurrentLogMessage);
+		} else {
+			format_console_simple(m_CurrentLogMessage);
+		}
+		if (this->write_in_file)
+			format_file(m_CurrentLogMessage);
+	}
 }
 
 OwnLogger::OwnLogger(std::string consoleName, bool wine, bool inConsole, bool inFile, bool createBackup, std::string logFileName) :
     m_attach_console(inConsole), m_did_console_exist(false), write_in_file(inFile), should_create_backup(createBackup), m_console_title(consoleName), m_original_console_mode(0), m_console_handle(nullptr), log_file_name(logFileName), show_date(true), show_file(true) {
-	m_console_logger = &OwnLogger::format_console;
 	if (const auto env_no_color = std::getenv("NO_COLOR"); wine || (env_no_color && strlen(env_no_color))) {
 		LOG(VERBOSE) << "Using simple logger.";
-		m_console_logger = &OwnLogger::format_console_simple;
+		FLUSH_LOG();
+		simple_logger = true;
 	}
 }
 

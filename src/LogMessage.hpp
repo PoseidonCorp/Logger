@@ -7,8 +7,8 @@
 
 class LogMessage {
 public:
-	LogMessage(const LogLevel level, std::chrono::system_clock::time_point&& timestamp, std::source_location&& location, std::string&& message) :
-	    m_Level(level), m_Timestamp(timestamp), m_Location(location), m_Message(message) {
+	LogMessage(const LogLevel level, const std::chrono::system_clock::time_point& timestamp, const std::source_location& location) :
+	    m_Level(level), m_Timestamp(timestamp), m_Location(location), m_Message("") {
 	}
 	virtual ~LogMessage() = default;
 
@@ -25,9 +25,10 @@ public:
 		return m_Timestamp;
 	}
 
+	std::string m_Message;
+
 private:
 	const LogLevel m_Level;
 	const std::chrono::system_clock::time_point m_Timestamp;
 	const std::source_location m_Location;
-	const std::string m_Message;
 };
