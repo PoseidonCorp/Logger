@@ -1,17 +1,19 @@
 #include "OwnLogger.hpp"
 
+LogCapture LOG(const LogLevel level, std::source_location location) {
+	return LogCapture{level};
+}
+
 OwnLogger::OwnLogger(std::string consoleName, bool wine, bool inConsole, bool inFile, bool createBackup, std::string logFileName) :
-    m_attach_console(inConsole), m_did_console_exist(false), write_in_file(inFile), should_create_backup(createBackup), m_console_logger(&OwnLogger::format_console), m_console_title(consoleName), m_original_console_mode(0), m_console_handle(nullptr), log_file_name(logFileName) {
+    m_attach_console(inConsole), m_did_console_exist(false), write_in_file(inFile), should_create_backup(createBackup), m_console_title(consoleName), m_original_console_mode(0), m_console_handle(nullptr), log_file_name(logFileName), show_date(true), show_file(true) {
+	m_console_logger = &OwnLogger::format_console;
 	if (const auto env_no_color = std::getenv("NO_COLOR"); wine || (env_no_color && strlen(env_no_color))) {
 		LOG(VERBOSE) << "Using simple logger.";
 		m_console_logger = &OwnLogger::format_console_simple;
 	}
-
-	// g_logger = this;
 }
 
 OwnLogger::~OwnLogger() {
-	// g_logger = nullptr;
 }
 
 void OwnLogger::init(std::filesystem::path folderPath, int alpha, bool showDate, bool showFile) {
@@ -41,17 +43,11 @@ void OwnLogger::init(std::filesystem::path folderPath, int alpha, bool showDate,
 	if (this->write_in_file)
 		open_outstreams(folderPath);
 
-	Logger::Init();
-	Logger::AddSink([ this, showDate, showFile ](LogMessagePtr msg) {
-		(this->*m_console_logger)(std::move(msg), showDate, showFile);
-	});
-	Logger::AddSink([ this, showDate, showFile ](LogMessagePtr msg) {
-		format_file(std::move(msg), showDate, showFile);
-	});
+	this->show_date = this->show_date;
+	this->show_file = showFile;
 }
 
 void OwnLogger::destroy() {
-	Logger::Destroy();
 	close_outstreams();
 
 	if (m_did_console_exist)
@@ -102,7 +98,7 @@ void OwnLogger::close_outstreams() {
 	m_file_out.close();
 }
 
-const LogColor get_color(const eLogLevel level) {
+const LogColor get_color(const LogLevel level) {
 	switch (level) {
 	case PROGRESS: return LogColor::BRIGHT_GREEN;
 	case AUTH: return LogColor::BRIGHT_BLUE;
@@ -117,7 +113,7 @@ const LogColor get_color(const eLogLevel level) {
 	return LogColor::WHITE;
 }
 
-const std::string get_level_string(const eLogLevel level) {
+const std::string get_level_string(const LogLevel level) {
 	std::vector<std::string> levelStrings = {
 	    {""},
 	    {"LOADING"},
@@ -134,30 +130,30 @@ const std::string get_level_string(const eLogLevel level) {
 	return levelStrings [ level ];
 }
 
-void OwnLogger::format_console(const LogMessagePtr msg, bool showDate, bool showFile) {
+void OwnLogger::format_console(const LogMessagePtr msg) {
 	static std::ostringstream buffer;
 	const auto color = get_color(msg->Level());
 
-	const auto timestamp = showDate ? std::format("{0:%H:%M:%S}", std::chrono::time_point_cast<std::chrono::seconds>(msg->Timestamp())) : "";
+	const auto timestamp = this->show_date ? std::format("{0:%H:%M:%S}", std::chrono::time_point_cast<std::chrono::seconds>(msg->Timestamp())) : "";
 	const auto& location = msg->Location();
 	const auto level     = msg->Level();
 
-	const auto file = showFile || level == eLogLevel::FATAL || level == eLogLevel::WARNING || level == eLogLevel::VERBOSE ?
+	const auto file = this->show_file || level == LogLevel::FATAL || level == LogLevel::WARNING || level == LogLevel::VERBOSE ?
 	    std::filesystem::path(location.file_name()).filename().string() :
 	    "";
 
-	const auto timestamp_stream = (showDate ? timestamp : "");
+	const auto timestamp_stream = (this->show_date ? timestamp : "");
 	const auto level_stream     = get_level_string(level);
-	const auto file_stream = (showFile || level == eLogLevel::FATAL || level == eLogLevel::WARNING || level == eLogLevel::VERBOSE ?
+	const auto file_stream = (this->show_file || level == LogLevel::FATAL || level == LogLevel::WARNING || level == LogLevel::VERBOSE ?
 	                              file + ":" + std::to_string(location.line()) :
 	                              "");
 
-	if (msg->Level() == eLogLevel::WARNING_DL || msg->Level() == eLogLevel::INFO_DL) {
+	if (msg->Level() == LogLevel::WARNING_DL || msg->Level() == LogLevel::INFO_DL) {
 		buffer << timestamp_stream << (timestamp_stream.length() > 0 ? " | " : "") << ADD_COLOR_TO_STREAM(color) << level_stream << RESET_STREAM_COLOR << " | " << file_stream << (file_stream.length() > 0 ? " | " : "") << msg->Message() << std::flush;
 		return;
 	}
 
-	if (msg->Level() == eLogLevel::PROGRESS) {
+	if (msg->Level() == LogLevel::PROGRESS) {
 		m_console_out << "\033[s" << timestamp_stream << (timestamp_stream.length() > 0 ? " | " : "") << ADD_COLOR_TO_STREAM(color) << level_stream << RESET_STREAM_COLOR << " | " << file_stream << (file_stream.length() > 0 ? " | " : "") << msg->Message() << std::flush;
 		return;
 	}
@@ -168,30 +164,30 @@ void OwnLogger::format_console(const LogMessagePtr msg, bool showDate, bool show
 	m_console_out << timestamp_stream << (timestamp_stream.length() > 0 ? " | " : "") << ADD_COLOR_TO_STREAM(color) << level_stream << RESET_STREAM_COLOR << " | " << file_stream << (file_stream.length() > 0 ? " | " : "") << msg->Message() << std::flush;
 }
 
-void OwnLogger::format_console_simple(const LogMessagePtr msg, bool showDate, bool showFile) {
+void OwnLogger::format_console_simple(const LogMessagePtr msg) {
 	static std::string buffer = "";
 	const auto color          = get_color(msg->Level());
 
-	const auto timestamp = showDate ? std::format("{0:%H:%M:%S}", std::chrono::time_point_cast<std::chrono::seconds>(msg->Timestamp())) : "";
+	const auto timestamp = this->show_date ? std::format("{0:%H:%M:%S}", std::chrono::time_point_cast<std::chrono::seconds>(msg->Timestamp())) : "";
 	const auto& location = msg->Location();
 	const auto level     = msg->Level();
 
-	const auto file = showFile || level == eLogLevel::FATAL || level == eLogLevel::WARNING || level == eLogLevel::VERBOSE ?
+	const auto file = this->show_file || level == LogLevel::FATAL || level == LogLevel::WARNING || level == LogLevel::VERBOSE ?
 	    std::filesystem::path(location.file_name()).filename().string() :
 	    "";
 
-	const auto timestamp_stream = (showDate ? timestamp : "");
+	const auto timestamp_stream = (this->show_date ? timestamp : "");
 	const auto level_stream     = get_level_string(level);
-	const auto file_stream = (showFile || level == eLogLevel::FATAL || level == eLogLevel::WARNING || level == eLogLevel::VERBOSE ?
+	const auto file_stream = (this->show_file || level == LogLevel::FATAL || level == LogLevel::WARNING || level == LogLevel::VERBOSE ?
 	                              file + ":" + std::to_string(location.line()) :
 	                              "");
 
-	if (msg->Level() == eLogLevel::WARNING_DL || msg->Level() == eLogLevel::INFO_DL) {
+	if (msg->Level() == LogLevel::WARNING_DL || msg->Level() == LogLevel::INFO_DL) {
 		buffer += timestamp_stream + (timestamp_stream.length() > 0 ? " | " : "") + level_stream + " | " + file_stream + (file_stream.length() > 0 ? " | " : "") + msg->Message() + "\n";
 		return;
 	}
 
-	if (msg->Level() == eLogLevel::PROGRESS) {
+	if (msg->Level() == LogLevel::PROGRESS) {
 		m_console_out << "\033[s" << level_stream << " | " << msg->Message() << std::flush;
 		return;
 	}
@@ -212,20 +208,20 @@ void OwnLogger::format_console_progress(std::string filled, std::string unfilled
 		m_console_out << "\033[K" << ADD_COLOR_TO_STREAM(LogColor::BRIGHT_GREEN) << filled << RESET_STREAM_COLOR << ADD_COLOR_TO_STREAM(LogColor::BRIGHT_BLACK) << unfilled << RESET_STREAM_COLOR << " " << progress << "%\r" << std::flush;
 }
 
-void OwnLogger::format_file(const LogMessagePtr msg, bool showDate, bool showFile) {
+void OwnLogger::format_file(const LogMessagePtr msg) {
 	if (!m_file_out.is_open())
 		return;
 
-	const auto timestamp = showDate ? std::format("{0:%H:%M:%S}", std::chrono::time_point_cast<std::chrono::seconds>(msg->Timestamp())) : "";
+	const auto timestamp = this->show_date ? std::format("{0:%H:%M:%S}", std::chrono::time_point_cast<std::chrono::seconds>(msg->Timestamp())) : "";
 	const auto& location = msg->Location();
 	const auto level     = msg->Level();
 
 	const auto file = std::filesystem::path(location.file_name()).filename().string();
 
-	const auto timestamp_stream = (showDate ? timestamp : "");
-	const auto level_and_file_stream = (showFile || level == eLogLevel::FATAL || level == eLogLevel::WARNING || level == eLogLevel::VERBOSE ? get_level_string(level) + " " + file + ":"
+	const auto timestamp_stream = (this->show_date ? timestamp : "");
+	const auto level_and_file_stream = (this->show_file || level == LogLevel::FATAL || level == LogLevel::WARNING || level == LogLevel::VERBOSE ? get_level_string(level) + " " + file + ":"
 	                                            + std::to_string(location.line()) :
-	                                                                                                                                          "" + get_level_string(level));
+	                                                                                                                                              "" + get_level_string(level));
 
 	m_file_out << timestamp_stream << (timestamp_stream.length() > 0 ? " | " : "") << level_and_file_stream
 	           << (level_and_file_stream.length() > 0 ? " | " : "") << msg->Message() << std::flush;

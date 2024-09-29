@@ -1,13 +1,15 @@
 #pragma once
 
-#include "Logger/Logger.hpp"
+#include "LogCapture.hpp"
+#include "LogColor.hpp"
+#include "LogLevel.hpp"
+#include "LogMessage.hpp"
 
 #include <array>
 #include <filesystem>
 #include <fstream>
 #include <windows.h>
 
-using namespace al;
 
 #define ADD_COLOR_TO_STREAM(color) "\x1b[" << int(color) << "m"
 #define RESET_STREAM_COLOR "\x1b[" << int(LogColor::RESET) << "m"
@@ -21,25 +23,7 @@ inline std::time_t to_time_t(TP tp) {
 	return system_clock::to_time_t(sctp);
 }
 
-enum class LogColor {
-	RESET,
-	BLACK          = 30,
-	RED            = 31,
-	GREEN          = 32,
-	YELLOW         = 33,
-	BLUE           = 34,
-	MAGENTA        = 35,
-	CYAN           = 36,
-	DARK_WHITE     = 37,
-	BRIGHT_BLACK   = 90,
-	BRIGHT_RED     = 91,
-	BRIGHT_GREEN   = 92,
-	BRIGHT_YELLOW  = 93,
-	BRIGHT_BLUE    = 94,
-	BRIGHT_MAGENTA = 95,
-	BRIGHT_CYAN    = 96,
-	WHITE          = 97,
-};
+using LogMessagePtr = std::unique_ptr<LogMessage>;
 
 class OwnLogger final {
 public:
@@ -57,18 +41,21 @@ private:
 	void open_outstreams(std::filesystem::path folderPath);
 	void close_outstreams();
 
-	void format_console(const LogMessagePtr msg, bool showDate = true, bool showFile = true);
-	void format_console_simple(const LogMessagePtr msg, bool showDate = true, bool showFile = true);
-	void format_file(const LogMessagePtr msg, bool showDate = true, bool showFile = true);
+	void format_console(const LogMessagePtr msg);
+	void format_console_simple(const LogMessagePtr msg);
+	void format_file(const LogMessagePtr msg);
+
 
 public:
 	bool m_attach_console;
 	bool write_in_file;
 	bool should_create_backup;
 	bool m_did_console_exist;
+	bool show_date;
+	bool show_file;
 	std::string log_file_name;
 
-	void (OwnLogger::*m_console_logger)(const LogMessagePtr msg, bool showDate, bool showFile);
+	void (OwnLogger::*m_console_logger)(const LogMessagePtr msg);
 
 	std::string m_console_title;
 	DWORD m_original_console_mode;
@@ -77,3 +64,6 @@ public:
 	std::ofstream m_console_out;
 	std::ofstream m_file_out;
 };
+
+extern LogCapture LOG(const LogLevel level, std::source_location location = std::source_location::current());
+extern std::unique_ptr<OwnLogger> logger;
