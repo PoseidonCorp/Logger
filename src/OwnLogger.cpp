@@ -1,5 +1,7 @@
 #include "OwnLogger.hpp"
 
+#include <iostream>
+
 OwnLogger& OwnLogger::Log(const LogLevel level, std::source_location location) {
 	std::lock_guard<std::mutex> lock(m_Mutex);
 	m_CurrentLogMessage = std::make_shared<LogMessage>(level, std::chrono::system_clock::now(), location);
@@ -11,6 +13,7 @@ OwnLogger& OwnLogger::Log(const LogLevel level, std::source_location location) {
 void OwnLogger::Flush() {
 	std::lock_guard<std::mutex> lock(m_Mutex);
 	if (m_CurrentLogMessage) {
+		m_Stream << std::endl;
 		m_CurrentLogMessage->m_Message = m_Stream.str(); // Capture du message complet
 		// Formattage console ou fichier
 		if (!simple_logger) {
@@ -114,7 +117,8 @@ void OwnLogger::close_outstreams() {
 	if (m_attach_console)
 		m_console_out.close();
 
-	m_file_out.close();
+	if (this->write_in_file)
+		m_file_out.close();
 }
 
 const LogColor get_color(const LogLevel level) {
@@ -123,8 +127,6 @@ const LogColor get_color(const LogLevel level) {
 	case AUTH: return LogColor::BRIGHT_BLUE;
 	case INFO: return LogColor::CYAN;
 	case WARNING: return LogColor::BRIGHT_YELLOW;
-	case INFO_DL: return LogColor::CYAN;
-	case WARNING_DL: return LogColor::BRIGHT_YELLOW;
 	case FATAL: return LogColor::BRIGHT_RED;
 	case DEBUG: return LogColor::BLUE;
 	case VERBOSE: return LogColor::YELLOW;
@@ -133,24 +135,12 @@ const LogColor get_color(const LogLevel level) {
 }
 
 const std::string get_level_string(const LogLevel level) {
-	std::vector<std::string> levelStrings = {
-	    {""},
-	    {"LOADING"},
-	    {"AUTH"},
-	    {"INFO"},
-	    {"WARN"},
-	    {"FATAL"},
-	    {"DEBUG"},
-	    {"VERBOSE"},
-	    {"INFO"},
-	    {"WARN"},
-	};
+	std::vector<std::string> levelStrings = {{""}, {"LOADING"}, {"AUTH"}, {"INFO"}, {"WARN"}, {"FATAL"}, {"DEBUG"}, {"VERBOSE"}};
 
 	return levelStrings [ level ];
 }
 
 void OwnLogger::format_console(const LogMessagePtr msg) {
-	static std::ostringstream buffer;
 	const auto color = get_color(msg->Level());
 
 	const auto timestamp = this->show_date ? std::format("{0:%H:%M:%S}", std::chrono::time_point_cast<std::chrono::seconds>(msg->Timestamp())) : "";
@@ -167,25 +157,16 @@ void OwnLogger::format_console(const LogMessagePtr msg) {
 	                              file + ":" + std::to_string(location.line()) :
 	                              "");
 
-	if (msg->Level() == LogLevel::WARNING_DL || msg->Level() == LogLevel::INFO_DL) {
-		buffer << timestamp_stream << (timestamp_stream.length() > 0 ? " | " : "") << ADD_COLOR_TO_STREAM(color) << level_stream << RESET_STREAM_COLOR << " | " << file_stream << (file_stream.length() > 0 ? " | " : "") << msg->Message() << std::flush;
-		return;
-	}
 
 	if (msg->Level() == LogLevel::PROGRESS) {
 		m_console_out << "\033[s" << timestamp_stream << (timestamp_stream.length() > 0 ? " | " : "") << ADD_COLOR_TO_STREAM(color) << level_stream << RESET_STREAM_COLOR << " | " << file_stream << (file_stream.length() > 0 ? " | " : "") << msg->Message() << std::flush;
 		return;
 	}
-	if (buffer.str().length() != 0) {
-		m_console_out << buffer.str() << std::flush;
-		buffer.clear();
-	}
 	m_console_out << timestamp_stream << (timestamp_stream.length() > 0 ? " | " : "") << ADD_COLOR_TO_STREAM(color) << level_stream << RESET_STREAM_COLOR << " | " << file_stream << (file_stream.length() > 0 ? " | " : "") << msg->Message() << std::flush;
 }
 
 void OwnLogger::format_console_simple(const LogMessagePtr msg) {
-	static std::string buffer = "";
-	const auto color          = get_color(msg->Level());
+	const auto color = get_color(msg->Level());
 
 	const auto timestamp = this->show_date ? std::format("{0:%H:%M:%S}", std::chrono::time_point_cast<std::chrono::seconds>(msg->Timestamp())) : "";
 	const auto& location = msg->Location();
@@ -201,21 +182,11 @@ void OwnLogger::format_console_simple(const LogMessagePtr msg) {
 	                              file + ":" + std::to_string(location.line()) :
 	                              "");
 
-	if (msg->Level() == LogLevel::WARNING_DL || msg->Level() == LogLevel::INFO_DL) {
-		buffer += timestamp_stream + (timestamp_stream.length() > 0 ? " | " : "") + level_stream + " | " + file_stream + (file_stream.length() > 0 ? " | " : "") + msg->Message() + "\n";
-		return;
-	}
-
 	if (msg->Level() == LogLevel::PROGRESS) {
 		m_console_out << "\033[s" << level_stream << " | " << msg->Message() << std::flush;
 		return;
 	}
 
-	if (!buffer.empty()) {
-		m_console_out << buffer;
-		buffer.clear();
-		buffer = "";
-	}
 	m_console_out << timestamp_stream << (timestamp_stream.length() > 0 ? " | " : "") << level_stream << " | " << file_stream << (file_stream.length() > 0 ? " | " : "") << msg->Message() << std::flush;
 }
 

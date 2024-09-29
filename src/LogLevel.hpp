@@ -1,13 +1,12 @@
 #pragma once
 
 enum LogLevel {
+	NONE,
 	PROGRESS,
 	AUTH,
 	INFO,
 	WARNING,
-	INFO_DL,
-	WARNING_DL,
 	FATAL,
 	DEBUG,
-	VERBOSE,
+	VERBOSE
 };

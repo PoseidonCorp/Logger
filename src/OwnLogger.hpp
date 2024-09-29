@@ -7,10 +7,10 @@
 #include <array>
 #include <filesystem>
 #include <fstream>
-#include <windows.h>
 #include <mutex>
-#include <sstream>
 #include <source_location>
+#include <sstream>
+#include <windows.h>
 
 
 #define ADD_COLOR_TO_STREAM(color) "\x1b[" << int(color) << "m"
