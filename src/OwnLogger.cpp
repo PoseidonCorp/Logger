@@ -145,7 +145,7 @@ std::string format_timestamp(const std::chrono::system_clock::time_point& tp) {
 void OwnLogger::format_console(const LogMessagePtr msg, bool showDate, bool showFile) {
 	const auto color = get_color(msg->Level());
 
-	const auto timestamp = showDate ? format_timestamp(msg->Timestamp()) : "";
+	const auto timestamp = showDate ? format_timestamp(std::move(msg->Timestamp())) : "";
 	const auto& location = msg->Location();
 	const auto level     = msg->Level();
 
@@ -210,7 +210,7 @@ void OwnLogger::format_file(const LogMessagePtr msg, bool showDate, bool showFil
 	const auto file = std::filesystem::path(location.file_name()).filename().string();
 
 	const auto timestamp_stream = (showDate ? timestamp : "");
-	const auto level_and_file_stream = (showFile || level == eLogLevel::FATAL || level == eLogLevel::WARNING || level == eLogLevel::VERBOSE ? get_level_string(level) + " " + file + ":"
+	const auto level_and_file_stream = (showFile || level == eLogLevel::FATAL || level == eLogLevel::WARNING || level == eLogLevel::VERBOSE ? get_level_string(level) + " | " + file + ":"
 	                                            + std::to_string(location.line()) :
 	                                                                                                                                          "" + get_level_string(level));
 
